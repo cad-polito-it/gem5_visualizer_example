@@ -1,0 +1,45 @@
+#!/bin/bash
+set -e
+GEM5=/home/vboxuser/gem5/build/RISCV/gem5.opt
+
+usage() {
+   echo "Usage: $0 <pipeline_configuration_file> <riscv_program_path> <output_log_file>"
+}
+
+if [ $# -lt 3 ]; then
+  usage
+  exit 1
+fi
+
+pipeline_conf=$1
+prog_name=$2
+log_name=$3
+
+if [ ! -f $pipeline_conf ]; then
+  echo "The provided pipeline configuration file does not exist: $pipeline_conf"
+  exit 1
+fi
+
+if [ ! -f $prog_name ]; then
+  echo "The specified program does not exist: $prog_name"
+  exit 1
+fi
+
+if [ -f $log_name ]; then
+  echo "WARNING: $log_name already exists and will be overwritten. Continue?"
+  read -p "Do you want to continue? (y/n): " answer
+
+  case "$answer" in
+      [nN]) 
+          echo "Exiting."
+          exit 0 
+      ;;
+      [yY]) ;;
+      *) 
+          echo "Invalid input. Please enter y or n."
+          exit 1 
+      ;;
+  esac
+fi
+
+$GEM5 --debug-flags=MinorGUI $pipeline_conf --cpu-type MinorCPU --caches --l1d_size 8388608 --l1i_size 8388608 --cacheline_size 512 --cpu-clock 1MHz --sys-clock 10GHz -c $prog_name > $log_name
